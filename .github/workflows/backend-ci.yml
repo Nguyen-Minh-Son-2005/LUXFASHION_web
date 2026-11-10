@@ -1,0 +1,92 @@
+name: Backend CI
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - develop
+      - 'feature/**'
+      - 'fix/**'
+    paths:
+      - 'Backend/**'
+      - '.github/workflows/backend-ci.yml'
+  pull_request:
+    branches:
+      - main
+      - master
+      - develop
+    paths:
+      - 'Backend/**'
+      - '.github/workflows/backend-ci.yml'
+  workflow_dispatch:
+
+# Tự động hủy job đang chạy nếu có commit mới được push lên cùng branch/PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend-ci:
+    name: Backend (Test & Package)
+    runs-on: ubuntu-latest
+
+    # Khởi tạo MySQL 8.0 Service Container chạy cùng Runner cho Integration Tests
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: rootpassword
+          MYSQL_DATABASE: luxfashion
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -uroot -prootpassword"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    defaults:
+      run:
+        working-directory: Backend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Ensure Maven Wrapper is executable
+        run: chmod +x mvnw
+
+      - name: Run Tests
+        env:
+          MYSQL_HOST: 127.0.0.1
+          MYSQL_PASSWORD: rootpassword
+          GOOGLE_CLIENT_ID: ci-dummy-client-id.apps.googleusercontent.com
+          GOOGLE_CLIENT_SECRET: ci-dummy-client-secret
+        run: ./mvnw clean test
+
+      - name: Package Application (JAR)
+        run: ./mvnw -B package -DskipTests
+
+      - name: Upload Build Artifact (JAR)
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: backend-jar
+          path: Backend/target/*.jar
+          retention-days: 7
+
+      - name: Upload Test Reports (on failure)
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: surefire-reports
+          path: Backend/target/surefire-reports/
+          retention-days: 5

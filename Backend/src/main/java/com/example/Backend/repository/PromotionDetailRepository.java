@@ -7,6 +7,7 @@ import com.example.Backend.entity.PromotionDetail;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -18,5 +19,7 @@ public interface PromotionDetailRepository extends JpaRepository<PromotionDetail
             @Param("product") Product product,
             @Param("promotion") Promotion promotion);
 
-    void deleteByPromotion_id(Promotion promotion);
+    @Modifying
+    @Query("DELETE FROM PromotionDetail pd WHERE pd.promotion_id = :promotion")
+    void deleteByPromotion_id(@Param("promotion") Promotion promotion);
 }

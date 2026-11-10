@@ -30,22 +30,6 @@ jobs:
   backend-ci:
     name: Backend (Test & Package)
     runs-on: ubuntu-latest
-
-    # Khởi tạo MySQL 8.0 Service Container chạy cùng Runner cho Integration Tests
-    services:
-      mysql:
-        image: mysql:8.0
-        env:
-          MYSQL_ROOT_PASSWORD: rootpassword
-          MYSQL_DATABASE: luxfashion
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping -h localhost -uroot -prootpassword"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-
     defaults:
       run:
         working-directory: Backend
@@ -65,11 +49,6 @@ jobs:
         run: chmod +x mvnw
 
       - name: Run Tests
-        env:
-          MYSQL_HOST: 127.0.0.1
-          MYSQL_PASSWORD: rootpassword
-          GOOGLE_CLIENT_ID: ci-dummy-client-id.apps.googleusercontent.com
-          GOOGLE_CLIENT_SECRET: ci-dummy-client-secret
         run: ./mvnw clean test
 
       - name: Package Application (JAR)

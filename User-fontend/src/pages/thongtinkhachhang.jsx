@@ -22,7 +22,7 @@ export default function ThongTinKhachHang() {
   const [refreshing, setRefreshing] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
-  const { toast, showSuccess, showError, hideToast } = useToast();
+  const { toast, showSuccess, hideToast } = useToast();
 
   // Form state
   const [formData, setFormData] = useState({
